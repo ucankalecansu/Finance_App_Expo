@@ -1,112 +1,115 @@
-import React, {useRef, useMemo, useState, useEffect} from 'react';
-import { FlatList, StyleSheet, Text, View, SafeAreaView } from 'react-native';
-import ListItem from './components/ListItem';
-import Chart from './components/Chart';
-import {
-    BottomSheetModal,
-    BottomSheetModalProvider,
-} from '@gorhom/bottom-sheet';
-import { getMarketData } from './services/cryptoService';
+import React, {useEffect} from "react";
+import {NavigationContainer, useNavigation} from "@react-navigation/native";
+import {createNativeStackNavigator} from "@react-navigation/native-stack";
+import {createBottomTabNavigator} from "@react-navigation/bottom-tabs";
+import Settings from "./screens/Settings";
+import {Ionicons} from "@expo/vector-icons";
+import SignUp from "./screens/SignUp";
+import Login from "./screens/Login";
+import {Provider} from "react-native-paper";
+import firebase from "firebase/compat";
+import "firebase/auth";
+import "firebase/firestore";
+import { DefaultTheme } from 'react-native-paper';
+import Market from "./screens/Market"
 
-const ListHeader = () => (
-    <>
-        <View style={styles.titleWrapper}>
-            <Text style={styles.largeTitle}>Market</Text>
-        </View>
-        <View style={styles.divider} />
-    </>
-)
+
+
+const firebaseConfig = {
+    apiKey: "AIzaSyCcBMudqVRVbq_9dTnFYXQuaPzyw82uvCA",
+    authDomain: "crypto-app-843e6.firebaseapp.com",
+    projectId: "crypto-app-843e6",
+    storageBucket: "crypto-app-843e6.appspot.com",
+    messagingSenderId: "213275624916",
+    appId: "1:213275624916:web:f164f40531dd376ac28241"
+};
+let app;
+app= firebase.initializeApp(firebaseConfig);
+
+const Stack= createNativeStackNavigator();
+const Tabs= createBottomTabNavigator();
+
+
+const theme = {
+    ...DefaultTheme,
+    roundness: 2,
+    colors: {
+        ...DefaultTheme.colors,
+        primary: '#2196f3',
+        accent: '#e91e63',
+    },
+};
+
+
+
+const TabNavigator=()=>{
+    const navigation=useNavigation();
+    useEffect(()=>{
+        firebase.auth().onAuthStateChanged(user=>{
+            if(!user){
+                navigation.navigate("SignUp");
+            }
+        });
+    },[])
+    return(
+
+        <Tabs.Navigator>
+            <Tabs.Screen
+                name={"Market"}
+                component={Market}
+                options={()=>({
+
+                    tabBarIcon:({color,size})=>{
+                        return <Ionicons color={color} size={size} name={"home"}/>
+
+                    },
+
+                    tabBarInactiveTintColor:"gray",
+
+                })}
+            />
+            <Tabs.Screen
+                name={"Ayarlar"}
+                component={Settings}
+                options={()=>({
+                    tabBarIcon:({color,size})=>{
+                        return <Ionicons color={color} size={size} name={"settings"}/>
+                    },
+                    tabBarActiveTintColor:"tomato",
+                    tabBarInactiveTintColor:"gray"
+                })}/>
+        </Tabs.Navigator>
+    )
+}
 
 export default function App() {
-    const [data, setData] = useState([]);
-    const [selectedCoinData, setSelectedCoinData] = useState(null);
-
-    useEffect(() => {
-        const fetchMarketData = async () => {
-            const marketData = await getMarketData();
-            setData(marketData);
-        }
-
-        fetchMarketData();
-    }, [])
-
-    const bottomSheetModalRef = useRef(null);
-
-    const snapPoints = useMemo(() => ['50%'], []);
-
-    const openModal = (item) => {
-        setSelectedCoinData(item);
-        bottomSheetModalRef.current?.present();
-    }
-
     return (
-        <BottomSheetModalProvider>
-            <SafeAreaView style={styles.container}>
-                <FlatList
-                    keyExtractor={(item) => item.id}
-                    data={data}
-                    renderItem={({ item }) => (
-                        <ListItem
-                            name={item.name}
-                            symbol={item.symbol}
-                            currentPrice={item.current_price}
-                            priceChangePercentage7d={item.price_change_percentage_7d_in_currency}
-                            logoUrl={item.image}
-                            onPress={() => openModal(item)}
-                        />
-                    )}
-                    ListHeaderComponent={<ListHeader />}
-                />
-            </SafeAreaView>
-
-            <BottomSheetModal
-                ref={bottomSheetModalRef}
-                index={0}
-                snapPoints={snapPoints}
-                style={styles.bottomSheet}
-            >
-                { selectedCoinData ? (
-                    <Chart
-                        currentPrice={selectedCoinData.current_price}
-                        logoUrl={selectedCoinData.image}
-                        name={selectedCoinData.name}
-                        symbol={selectedCoinData.symbol}
-                        priceChangePercentage7d={selectedCoinData.price_change_percentage_7d_in_currency}
-                        sparkline={selectedCoinData?.sparkline_in_7d.price}
+        <NavigationContainer>
+            <Provider theme={theme}>
+                <Stack.Navigator>
+                    <Stack.Screen
+                        name={"Market"}
+                        component={TabNavigator}
+                        options={{headerShown:false}}/>
+                    <Stack.Screen
+                        name={"Login"}
+                        component={Login}
+                        options={{presentation:"fullScreenModal"}}
                     />
-                ) : null}
-            </BottomSheetModal>
-        </BottomSheetModalProvider>
+                    <Stack.Screen
+                        name={"SignUp"}
+                        component={SignUp}
+                        options={{
+                            presentation:"fullScreenModal"}}/>
+
+                </Stack.Navigator>
+            </Provider>
+
+
+        </NavigationContainer>
+
+
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-    },
-    titleWrapper: {
-        marginTop: 20,
-        paddingHorizontal: 16,
-    },
-    largeTitle: {
-        fontSize: 24,
-        fontWeight: "bold",
-    },
-    divider: {
-        height: 1,
-        backgroundColor: '#A9ABB1',
-        marginHorizontal: 16,
-        marginTop: 16,
-    },
-    bottomSheet: {
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: -4,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
-    },
-});
+
