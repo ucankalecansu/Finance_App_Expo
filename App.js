@@ -1,5 +1,5 @@
 import React from "react";
-import {FlatList, StyleSheet, Text, View} from 'react-native';
+import {FlatList, StyleSheet, Text, View,SafeAreaView} from 'react-native';
 import ListItem from "./components/ListItem";
 
 import {SAMPLE_DATA} from "./assets/data/sampleData";
@@ -17,7 +17,7 @@ const ListHeader=()=>{
 
 export default function App() {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
 
       <FlatList
           keyExtractor={(item)=>item.id}
@@ -34,7 +34,7 @@ export default function App() {
           ListHeaderComponent={<ListHeader/>}
       />
 
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   titleWrapper:{
-    marginTop:80,
+    marginTop:20,
     paddingHorizontal:16
   },
   largeTitle:{
